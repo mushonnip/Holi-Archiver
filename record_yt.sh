@@ -10,6 +10,10 @@ if [[ ! -n "$1" ]]; then
   exit 1
 fi
 
+# Change to your own API key
+# https://holodex.net/
+HOLODEX_APIKEY="da5a0e83-be4a-4d06-8e9f-9e0b1b8119a7"
+
 CH_ID=$1
 LIVE_URL="https://www.youtube.com/channel/$CH_ID/live"
 
@@ -26,7 +30,7 @@ while true; do
 
     # Check if live stream available with wget
     LIVE_CHECKER=$(curl -s --request GET --url https://holodex.net/api/v2/users/live\?channels=$CH_ID \
-     --header "X-APIKEY: da5a0e83-be4a-4d06-8e9f-9e0b1b8119a7" \
+     --header "X-APIKEY: ${HOLODEX_APIKEY}" \
      --header "Content-Type: application/json")
     
     [[ "$LIVE_CHECKER" != "[]" ]] && break
