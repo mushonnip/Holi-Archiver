@@ -25,7 +25,7 @@ while true; do
     echo "$LOG_PREFIX Checking \"$LIVE_URL\" using Holodex API..."
 
     # Check if live stream available with wget
-    LIVE_CHECKER=$(curl --request GET --url https://holodex.net/api/v2/users/live\?channels=$CH_ID \
+    LIVE_CHECKER=$(curl -s --request GET --url https://holodex.net/api/v2/users/live\?channels=$CH_ID \
      --header "X-APIKEY: da5a0e83-be4a-4d06-8e9f-9e0b1b8119a7" \
      --header "Content-Type: application/json")
     
