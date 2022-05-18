@@ -6,7 +6,7 @@
 # $3 = Loop or Once
 
 if [[ ! -n "$1" ]]; then
-  echo "usage: $0 youtube_channel_id|live_url [format] [loop|once] [interval]"
+  echo "usage: $0 youtube_channel_id [format] [loop|once] [interval]"
   exit 1
 fi
 
@@ -40,18 +40,18 @@ while true; do
   # Extract video id of live stream
   ID=$(echo "$METADATA" | jq -r '.id')
 
-  # Record using MPEG-2 TS format to avoid broken file caused by interruption
-  FNAME="youtube_${ID}_$(date +"%Y%m%d_%H%M%S").ts"
+  FNAME="youtube_${ID}_$(date +"%Y%m%d_%H%M%S")"
+  mkdir -p $FNAME
   # Also save the metadate to file
-  echo "$METADATA" > "$FNAME.info.txt"
+  echo "$METADATA" > "$FNAME/$FNAME.txt"
 
   # Print logs
-  echo "$LOG_PREFIX Start recording, metadata saved to \"$FNAME.info.txt\"."
-  echo "$LOG_PREFIX Use command \"tail -f $FNAME.log\" to track recording progress."
+  echo "$LOG_PREFIX Start recording, metadata saved to \"$FNAME/$FNAME.txt\"."
 
   # Use streamlink to record for HLS seeking support
-  streamlink --hls-live-restart --loglevel trace -o "$FNAME" \
-    "https://www.youtube.com/watch?v=${ID}" "$FORMAT" > "$FNAME.log" 2>&1
+  # Record using MPEG-2 TS format to avoid broken file caused by interruption
+  streamlink --hls-live-restart --quiet -o "$FNAME/$FNAME.ts" \
+    "https://www.youtube.com/watch?v=${ID}" "$FORMAT"
 
   # Exit if we just need to record current stream
   LOG_PREFIX=$(date +"[%Y-%m-%d %H:%M:%S]")
