@@ -11,7 +11,7 @@ if [[ ! -n "$1" ]]; then
 fi
 
 # Change to your own API key
-# https://holodex.net/
+# https://holodex.stoplight.io/docs/holodex/ZG9jOjQ2Nzk1-getting-started#obtaining-api-key
 HOLODEX_APIKEY="da5a0e83-be4a-4d06-8e9f-9e0b1b8119a7"
 
 CH_ID=$1
@@ -28,12 +28,9 @@ while true; do
     LOG_PREFIX=$(date +"[%Y-%m-%d %H:%M:%S]")
     echo "$LOG_PREFIX Checking \"$LIVE_URL\" using Holodex API..."
 
-    # Check if live stream available with wget
-    LIVE_CHECKER=$(curl -s --request GET --url https://holodex.net/api/v2/users/live\?channels=$CH_ID \
-     --header "X-APIKEY: ${HOLODEX_APIKEY}" \
-     --header "Content-Type: application/json")
-    
-    [[ "$LIVE_CHECKER" != "[]" ]] && break
+    # Check if live stream available with wget    
+    METADATA="$(wget --header="X-APIKEY: ${HOLODEX_APIKEY}" --header="Content-Type: application/json" -qO - https://holodex.net/api/v2/users/live\?channels=${CH_ID} | jq -r '.[] | select(.channel.id=="'${CH_ID}'") | select(.status == "live")')"
+    [[ "$METADATA" != "" ]] && break
 
     echo "$LOG_PREFIX The stream is not available now."
     echo "$LOG_PREFIX Retry after $INTERVAL seconds..."
@@ -41,7 +38,7 @@ while true; do
   done
 
   # Extract video id of live stream
-  ID=$(echo "$LIVE_CHECKER" | jq -r '.[0].id')
+  ID=$(echo "$METADATA" | jq -r '.id')
 
   # Record using MPEG-2 TS format to avoid broken file caused by interruption
   FNAME="youtube_${ID}_$(date +"%Y%m%d_%H%M%S").ts"
