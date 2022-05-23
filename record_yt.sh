@@ -15,7 +15,11 @@ fi
 HOLODEX_APIKEY="da5a0e83-be4a-4d06-8e9f-9e0b1b8119a7"
 
 CH_ID=$1
-LIVE_URL="https://www.youtube.com/channel/$CH_ID/live"
+
+# Check if given id is not a custom channel id
+if [[ $CH_ID != UC* ]]; then
+  CH_ID=$(wget -qO- https://www.youtube.com/c/$CH_ID | grep -oP '<meta itemprop="channelId" content="\K.*?(?=")')
+fi
 
 # Record the highest quality available by default
 FORMAT="${2:-best}"
@@ -26,7 +30,7 @@ while true; do
   while true; do
     
     LOG_PREFIX=$(date +"[%Y-%m-%d %H:%M:%S]")
-    echo "$LOG_PREFIX Checking \"$LIVE_URL\" using Holodex API..."
+    echo "$LOG_PREFIX Checking \"$CH_ID\" using Holodex API..."
 
     # Check if live stream available with wget    
     METADATA="$(wget --header="X-APIKEY: ${HOLODEX_APIKEY}" --header="Content-Type: application/json" -qO - https://holodex.net/api/v2/users/live\?channels=${CH_ID} | jq -r '.[] | select(.channel.id=="'${CH_ID}'") | select(.status == "live")')"
@@ -57,4 +61,8 @@ while true; do
   LOG_PREFIX=$(date +"[%Y-%m-%d %H:%M:%S]")
   echo "$LOG_PREFIX Live stream recording stopped."
   [[ "$3" == "once" ]] && break
+
+  # TODO: Fix the bug that keeps recording the same stream when it's already offline 
+  echo "Delay 1 minute before continue checking."
+  sleep 1m
 done
