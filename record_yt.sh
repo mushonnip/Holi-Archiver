@@ -44,25 +44,10 @@ while true; do
   # Extract video id of live stream
   ID=$(echo "$METADATA" | jq -r '.id')
 
-  FNAME="youtube_${ID}_$(date +"%Y%m%d_%H%M%S")"
-  mkdir -p $FNAME
-  # Also save the metadate to file
-  echo "$METADATA" > "$FNAME/$FNAME.txt"
-
-  # Print logs
-  echo "$LOG_PREFIX Start recording, metadata saved to \"$FNAME/$FNAME.txt\"."
-
-  # Use streamlink to record for HLS seeking support
-  # Record using MPEG-2 TS format to avoid broken file caused by interruption
-  streamlink --hls-live-restart --quiet -o "$FNAME/$FNAME.ts" \
-    "https://www.youtube.com/watch?v=${ID}" "$FORMAT"
+  # Use ytarchive to record the stream
+  ./bin/ytarchive --wait --merge -o '%(channel)s/%(upload_date)s_%(title)s' https://www.youtube.com/watch\?v\=$ID best
 
   # Exit if we just need to record current stream
-  LOG_PREFIX=$(date +"[%Y-%m-%d %H:%M:%S]")
-  echo "$LOG_PREFIX Live stream recording stopped."
+  echo "Live stream recording stopped."
   [[ "$3" == "once" ]] && break
-
-  # TODO: Fix the bug that keeps recording the same stream when it's already offline 
-  echo "Delay 1 minute before continue checking."
-  sleep 1m
 done
