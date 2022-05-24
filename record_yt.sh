@@ -1,12 +1,18 @@
 #!/bin/bash
 # YouTube Live Stream Recorder
 
-# $1 = YouTube Channel ID
-# $2 = Stream quality
-# $3 = Loop or Once
+while getopts q:t:i:c flag; do
+  case $flag in
+    q) QUALITY=${OPTARG};;
+    t) TASK=${OPTARG};;
+    i) INTERVAL=${OPTARG};;
+    c) COOKIES=${OPTARG};;
+    ?) echo "Usage: $0 [-q quality] [-t task] [-i interval] [-c cookies]" exit 1;;
+  esac
+done
 
 if [[ ! -n "$1" ]]; then
-  echo "usage: $0 youtube_channel_id [format] [loop|once] [interval]"
+  echo "Usage: $0 youtube_channel_id [-q quality] [-t task] [-i interval] [-c cookies]"
   exit 1
 fi
 
@@ -14,16 +20,25 @@ fi
 # https://holodex.stoplight.io/docs/holodex/ZG9jOjQ2Nzk1-getting-started#obtaining-api-key
 HOLODEX_APIKEY="da5a0e83-be4a-4d06-8e9f-9e0b1b8119a7"
 
+# Default values
 CH_ID=$1
+if [[ -z "$QUALITY" ]]; then
+  QUALITY="best"
+fi
+if [[ -z "$TASK" ]]; then
+  TASK="once"
+fi
+if [[ -z "$INTERVAL" ]]; then
+  INTERVAL=30
+fi
+if [[ -n "$COOKIES" ]]; then
+  COOKIES="-c $COOKIES"
+fi
 
 # Check if given id is not a custom channel id
 if [[ $CH_ID != UC* ]]; then
   CH_ID=$(wget -qO- https://www.youtube.com/c/$CH_ID | grep -oP '<meta itemprop="channelId" content="\K.*?(?=")')
 fi
-
-# Record the highest quality available by default
-FORMAT="${2:-best}"
-INTERVAL="${4:-10}"
 
 while true; do
   # Monitor live streams of specific channel
@@ -45,9 +60,9 @@ while true; do
   ID=$(echo "$METADATA" | jq -r '.id')
 
   # Use ytarchive to record the stream
-  ./bin/ytarchive --wait --merge -o '%(channel)s/%(upload_date)s_%(title)s' https://www.youtube.com/watch\?v\=$ID best
+  ./bin/ytarchive --wait --merge --write-description --write-thumbnail $COOKIES -o '%(channel)s/%(upload_date)s_%(title)s' https://www.youtube.com/watch\?v\=$ID $QUALITY
 
   # Exit if we just need to record current stream
   echo "Live stream recording stopped."
-  [[ "$3" == "once" ]] && break
+  [[ "$TASK" == "once" ]] && break
 done
