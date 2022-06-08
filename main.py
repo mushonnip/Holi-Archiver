@@ -51,8 +51,9 @@ send_json_request(ws, payload)
 while(True):
     event=receive_json_response(ws)
     try:
-        command = "echo '" + event["d"]["content"] + "'; ./bin/ytarchive --write-description --write-thumbnail --merge -o '%(channel)s/%(upload_date)s_%(title)s' "+ event["d"]["content"]+" best"
-        subprocess.run(command, shell=True)
+        command = "echo '" + event["d"]["content"] + "'; ./bin/ytarchive --write-description --write-thumbnail --merge -o '../%(channel)s/%(upload_date)s_%(title)s' "+ event["d"]["content"]+" best"
+        subprocess.Popen(command, shell=True)
+
         op_code = event('op')
         if op_code == 11:
             print("heartbeat received")
